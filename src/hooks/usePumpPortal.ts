@@ -547,12 +547,26 @@ export const usePumpPortal = (searchTerm: string = '') => {
     const symbol = data.symbol.toLowerCase();
     
     // Check if this is THE ClawScout token (Priority Detection)
-    const isOfficial = CLAW_SCOUT_CONFIG.officialMintAddress === data.mint;
+    const isOfficialConfig = CLAW_SCOUT_CONFIG.officialMintAddress === data.mint;
     const isNameMatch = CLAW_SCOUT_CONFIG.targetNames.some(n => name.includes(n.toLowerCase())) || 
                         CLAW_SCOUT_CONFIG.targetSymbols.some(s => symbol.includes(s.toLowerCase()));
     
-    // Auto-Save from Stream
-    if (isNameMatch && !CLAW_SCOUT_CONFIG.officialMintAddress) {
+    // Determine if this IS the ClawSeek token we care about
+    let isClawScout = false;
+
+    if (CLAW_SCOUT_CONFIG.officialMintAddress) {
+        // If we have a hardcoded address, ONLY that address is ClawSeek
+        isClawScout = isOfficialConfig;
+    } else if (clawTokenRef.current) {
+        // If we already found one during this session, ONLY that one is ClawSeek
+        isClawScout = clawTokenRef.current.id === data.mint;
+    } else {
+        // We are hunting, and haven't found it yet.
+        isClawScout = isNameMatch;
+    }
+    
+    // Auto-Save from Stream (Only if we just found it)
+    if (isClawScout && !CLAW_SCOUT_CONFIG.officialMintAddress && !clawTokenRef.current) {
         console.log("Found ClawSeek in stream, auto-saving...", data.mint);
         fetch('/__save-claw-token', {
              method: 'POST',
@@ -563,8 +577,6 @@ export const usePumpPortal = (searchTerm: string = '') => {
              })
         }).catch(err => console.error("Auto-save failed", err));
     }
-
-    const isClawScout = isOfficial || isNameMatch;
 
     const targetGroupIds = classifyToken(name, symbol);
 
@@ -600,12 +612,12 @@ export const usePumpPortal = (searchTerm: string = '') => {
              }
 
              // FORCE OVERRIDE: Use local image for ClawScout
-             resolvedImageUrl = '/images/clawscout-logo.jpg';
+             resolvedImageUrl = CLAW_SCOUT_CONFIG.image || '/clawseek_logo.jpg';
              
         } catch (e) {
             // Fallback to standard flow
             // FORCE OVERRIDE: Use local image for ClawScout even if error
-            resolvedImageUrl = '/images/clawscout-logo.jpg';
+            resolvedImageUrl = CLAW_SCOUT_CONFIG.image || '/clawseek_logo.jpg';
         }
     } else if (data.uri) {
         // Standard flow for other tokens
