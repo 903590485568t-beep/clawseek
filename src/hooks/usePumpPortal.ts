@@ -236,10 +236,17 @@ export const usePumpPortal = (searchTerm: string = '') => {
   useEffect(() => {
     const fetchInitialData = async () => {
         try {
-            const proxyUrl = 'https://corsproxy.io/?';
-            const targetUrl = 'https://frontend-api.pump.fun/coins?offset=0&limit=50&sort=created_timestamp&order=DESC&include_nsfw=true';
+            let url;
+            // Use local API proxy in production (Saved on Host logic)
+            if (import.meta.env.PROD) {
+                url = '/api/tokens';
+            } else {
+                const proxyUrl = 'https://corsproxy.io/?';
+                const targetUrl = 'https://frontend-api.pump.fun/coins?offset=0&limit=50&sort=created_timestamp&order=DESC&include_nsfw=true';
+                url = proxyUrl + encodeURIComponent(targetUrl);
+            }
             
-            const res = await fetch(proxyUrl + encodeURIComponent(targetUrl));
+            const res = await fetch(url);
             if (!res.ok) throw new Error('Failed to fetch initial data');
             
             const data = await res.json();
@@ -331,12 +338,19 @@ export const usePumpPortal = (searchTerm: string = '') => {
     // This is often faster because it saves one IPFS roundtrip
     if (isClawScout) {
         try {
-             const proxyUrl = 'https://corsproxy.io/?';
-             const targetUrl = `https://frontend-api.pump.fun/coins/${data.mint}`;
+             let apiUrl;
+             if (import.meta.env.PROD) {
+                apiUrl = `/api/token-info?mint=${data.mint}`;
+             } else {
+                const proxyUrl = 'https://corsproxy.io/?';
+                const targetUrl = `https://frontend-api.pump.fun/coins/${data.mint}`;
+                apiUrl = proxyUrl + encodeURIComponent(targetUrl);
+             }
+
              // Race between IPFS metadata and Pump API
              const [metadataResult, apiResult] = await Promise.allSettled([
                  fetchIpfsJson(data.uri),
-                 fetch(proxyUrl + encodeURIComponent(targetUrl)).then(res => res.json())
+                 fetch(apiUrl).then(res => res.json())
              ]);
 
              // Check API result first (usually faster/more reliable for image link)
@@ -444,10 +458,16 @@ export const usePumpPortal = (searchTerm: string = '') => {
     // Fetch Pump.fun API to correct any missing data (async, doesn't block UI anymore since we have valid initial data)
     setTimeout(async () => {
         try {
-            // Use a CORS proxy to avoid browser errors when fetching from frontend-api
-            const proxyUrl = 'https://corsproxy.io/?';
-            const targetUrl = `https://frontend-api.pump.fun/coins/${data.mint}`;
-            const res = await fetch(proxyUrl + encodeURIComponent(targetUrl));
+            let url;
+            if (import.meta.env.PROD) {
+                url = `/api/token-info?mint=${data.mint}`;
+            } else {
+                const proxyUrl = 'https://corsproxy.io/?';
+                const targetUrl = `https://frontend-api.pump.fun/coins/${data.mint}`;
+                url = proxyUrl + encodeURIComponent(targetUrl);
+            }
+
+            const res = await fetch(url);
             
             if (!res.ok) throw new Error('Proxy/API Error');
             
