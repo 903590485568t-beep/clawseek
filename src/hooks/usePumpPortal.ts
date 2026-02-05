@@ -44,6 +44,7 @@ const preloadImage = (src: string): Promise<void> => {
 export const usePumpPortal = (searchTerm: string = '') => {
   const [groups, setGroups] = useState<TrendGroup[]>(analyzeTrends());
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [stats, setStats] = useState({ totalProcessed: 0 });
   const [solPrice, setSolPrice] = useState(200); // Default 200 to show USD immediately
   const [clawToken, setClawToken] = useState<Token | null>(null);
@@ -416,6 +417,7 @@ export const usePumpPortal = (searchTerm: string = '') => {
           }
           console.log('Connected to PumpPortal');
           setIsConnected(true);
+          setConnectionError(null);
           
           // Subscribe to new token creations
           socket?.send(JSON.stringify({
@@ -446,12 +448,14 @@ export const usePumpPortal = (searchTerm: string = '') => {
 
         socket.onerror = (error) => {
           console.error('WebSocket error:', error);
+          setConnectionError('Connection failed. Retrying...');
           // Close will trigger onclose which handles reconnect
           socket?.close();
         };
 
       } catch (err) {
         console.error('Failed to create WebSocket:', err);
+        setConnectionError('WebSocket blocked or invalid');
         reconnectTimeout = setTimeout(connect, 5000);
       }
     };
@@ -477,5 +481,5 @@ export const usePumpPortal = (searchTerm: string = '') => {
     )
   })).filter(g => g.tokens.length > 0 || searchTerm === ''); // Hide empty groups if searching
 
-  return { groups: filteredGroups, isConnected, stats, solPrice, clawToken };
+  return { groups: filteredGroups, isConnected, connectionError, stats, solPrice, clawToken };
 };

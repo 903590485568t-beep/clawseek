@@ -8,7 +8,7 @@ import { Wifi, WifiOff } from 'lucide-react';
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
-  const { groups, isConnected, stats, solPrice, clawToken } = usePumpPortal(searchTerm);
+  const { groups, isConnected, connectionError, stats, solPrice, clawToken } = usePumpPortal(searchTerm);
 
   return (
     <div className="min-h-screen bg-claw-bg text-claw-text selection:bg-claw-primary selection:text-white relative overflow-hidden">
@@ -76,7 +76,7 @@ function App() {
           <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${isConnected ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
             {isConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
             <span className="font-bold">
-              {isConnected ? 'LIVE FEED ACTIVE' : 'CONNECTING...'}
+              {isConnected ? 'LIVE FEED ACTIVE' : (connectionError || 'CONNECTING...')}
             </span>
           </div>
         </div>
