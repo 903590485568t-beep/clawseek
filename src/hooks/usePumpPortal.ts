@@ -399,7 +399,7 @@ export const usePumpPortal = (searchTerm: string = '') => {
   }, [hasKeyword]);
 
   useEffect(() => {
-    let reconnectTimeout: NodeJS.Timeout;
+    let reconnectTimeout: ReturnType<typeof setTimeout>;
     let socket: WebSocket | null = null;
     let isUnmounted = false;
 
