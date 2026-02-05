@@ -52,6 +52,27 @@ export const usePumpPortal = (searchTerm: string = '') => {
   const solPriceRef = useRef(200);
   const ws = useRef<WebSocket | null>(null);
 
+  // Load ClawToken from LocalStorage on mount
+  useEffect(() => {
+    try {
+        const stored = localStorage.getItem('claw_token_data');
+        if (stored) {
+            const token = JSON.parse(stored);
+            setClawToken(token);
+            clawTokenRef.current = token;
+        }
+    } catch (e) {
+        console.error("Failed to load stored token", e);
+    }
+  }, []);
+
+  // Save ClawToken to LocalStorage whenever it updates
+  useEffect(() => {
+    if (clawToken) {
+        localStorage.setItem('claw_token_data', JSON.stringify(clawToken));
+    }
+  }, [clawToken]);
+
   // Fetch SOL Price
   useEffect(() => {
     const fetchSolPrice = async () => {
@@ -307,6 +328,45 @@ export const usePumpPortal = (searchTerm: string = '') => {
     };
 
     fetchInitialData();
+
+    // Re-verify stored ClawToken data
+    const verifyStoredToken = async () => {
+        const stored = localStorage.getItem('claw_token_data');
+        if (!stored) return;
+        
+        try {
+            const token = JSON.parse(stored);
+            let url;
+            if (import.meta.env.PROD) {
+                url = `/api/token-info?mint=${token.id}`;
+            } else {
+                const proxyUrl = 'https://corsproxy.io/?';
+                const targetUrl = `https://frontend-api.pump.fun/coins/${token.id}`;
+                url = proxyUrl + encodeURIComponent(targetUrl);
+            }
+
+            const res = await fetch(url);
+            if (!res.ok) return;
+            const info = await res.json();
+            
+            if (info) {
+                 const updatedToken = {
+                    ...token,
+                    marketCap: info.usd_market_cap || token.marketCap,
+                    volume24h: info.total_volume || token.volume24h,
+                    price: (info.usd_market_cap || 0) / 1000000000,
+                    vSolInBondingCurve: info.virtual_sol_reserves || token.vSolInBondingCurve,
+                    bondingCurve: info.complete ? 100 : (info.bonding_curve_progress || 0) * 100
+                 };
+                 setClawToken(updatedToken);
+                 clawTokenRef.current = updatedToken;
+            }
+        } catch (e) {
+            console.error("Failed to re-verify stored token", e);
+        }
+    };
+    
+    verifyStoredToken();
   }, [classifyToken]);
 
   const handleNewToken = useCallback(async (data: PumpPortalToken) => {
