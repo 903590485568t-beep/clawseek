@@ -398,44 +398,71 @@ export const usePumpPortal = (searchTerm: string = '') => {
   }, [hasKeyword]);
 
   useEffect(() => {
-    ws.current = new WebSocket(WS_URL);
+    let reconnectTimeout: NodeJS.Timeout;
+    let socket: WebSocket | null = null;
+    let isUnmounted = false;
 
-    ws.current.onopen = () => {
-      console.log('Connected to PumpPortal');
-      setIsConnected(true);
-      
-      // Subscribe to new token creations
-      ws.current?.send(JSON.stringify({
-        method: "subscribeNewToken", 
-      }));
+    const connect = () => {
+      if (isUnmounted) return;
 
-      // Remove global trade subscription to avoid noise and ensure we only track what we display
-      // ws.current?.send(JSON.stringify({
-      //    method: "subscribeTrade", 
-      // }));
-    };
-
-    ws.current.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        if (data.txType === 'create') {
-          handleNewToken(data);
-        } else if (data.txType === 'trade' || data.txType === 'buy' || data.txType === 'sell') {
-          handleTrade(data);
-        }
-      } catch (e) {
-        console.error('Error parsing WS message', e);
+        socket = new WebSocket(WS_URL);
+        ws.current = socket;
+
+        socket.onopen = () => {
+          if (isUnmounted) {
+            socket?.close();
+            return;
+          }
+          console.log('Connected to PumpPortal');
+          setIsConnected(true);
+          
+          // Subscribe to new token creations
+          socket?.send(JSON.stringify({
+            method: "subscribeNewToken", 
+          }));
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.txType === 'create') {
+              handleNewToken(data);
+            } else if (data.txType === 'trade' || data.txType === 'buy' || data.txType === 'sell') {
+              handleTrade(data);
+            }
+          } catch (e) {
+            console.error('Error parsing WS message', e);
+          }
+        };
+
+        socket.onclose = () => {
+          if (isUnmounted) return;
+          console.log('Disconnected from PumpPortal, reconnecting in 3s...');
+          setIsConnected(false);
+          // Retry connection after delay
+          reconnectTimeout = setTimeout(connect, 3000);
+        };
+
+        socket.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          // Close will trigger onclose which handles reconnect
+          socket?.close();
+        };
+
+      } catch (err) {
+        console.error('Failed to create WebSocket:', err);
+        reconnectTimeout = setTimeout(connect, 5000);
       }
     };
 
-    ws.current.onclose = () => {
-      console.log('Disconnected from PumpPortal');
-      setIsConnected(false);
-    };
+    connect();
 
     return () => {
-      if (ws.current) {
-        ws.current.close();
+      isUnmounted = true;
+      clearTimeout(reconnectTimeout);
+      if (socket) {
+        socket.close();
       }
     };
   }, [handleNewToken, handleTrade]);
