@@ -5,22 +5,7 @@ import { CLAW_SCOUT_CONFIG } from '../clawConfig';
 
 const WS_URL = 'wss://pumpportal.fun/api/data';
 
-// FOR PREVIEW ONLY: Test Token Data
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const TEST_TOKEN: Token = {
-    id: "8D9GXfwDNzPxufDhUFXHwb7mEMZztxmKXXPE1P43pump",
-    name: "ClawSeek Alpha",
-    symbol: "CLAW",
-    price: 0.0012,
-    marketCap: 125000,
-    volume24h: 45000,
-    change24h: 25,
-    imageUrl: "/clawseek_logo.jpg",
-    description: "The official token of the ClawSeek platform. Holding this token grants access to premium features and faster scanning speeds.",
-    created: Date.now(),
-    bondingCurve: 45,
-    vSolInBondingCurve: 50
-};
+
 
 interface PumpPortalTrade {
   signature: string;

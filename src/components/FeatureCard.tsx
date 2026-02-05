@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Token } from '../data/mockData';
 import { getIpfsUrl } from '../lib/utils';
-import { ExternalLink, Zap } from 'lucide-react';
+import { ExternalLink, Zap, Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
 interface FeatureCardProps {
@@ -25,12 +25,11 @@ export const FeatureCard = ({ token, solPrice = 200 }: FeatureCardProps) => {
     if (val >= 1000) return `$${(val / 1000).toFixed(1)}K`;
     return `$${val.toFixed(1)}`;
   };
-  
+   
   // Use copied state to prevent unused warning
-  // In a real app we would use this in the UI
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _ignored = copied; 
-
-
+ 
   if (!token) {
     return (
       <motion.div 
