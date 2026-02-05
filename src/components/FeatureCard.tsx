@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Token } from '../data/mockData';
-import { formatNumber, getIpfsUrl } from '../lib/utils';
-import { Copy, Check, ExternalLink } from 'lucide-react';
+import { getIpfsUrl } from '../lib/utils';
+import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 
 interface FeatureCardProps {
@@ -111,12 +111,12 @@ export const FeatureCard = ({ token, solPrice = 200 }: FeatureCardProps) => {
         <div className="space-y-1.5 mb-4">
             <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider">
                 <span className="text-claw-dim">Bonding Curve Progress</span>
-                <span className="text-white">{token.vSolInBondingCurve > 0 ? 'Active' : 'Graduated'}</span>
+                <span className="text-white">{(token.vSolInBondingCurve ?? 0) > 0 ? 'Active' : 'Graduated'}</span>
             </div>
             <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
                 <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: `${token.bondingCurve}%` }}
+                    animate={{ width: `${token.bondingCurve ?? 0}%` }}
                     className="h-full bg-gradient-to-r from-claw-primary to-emerald-400"
                 />
             </div>

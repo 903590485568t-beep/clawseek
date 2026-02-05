@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Copy, Check, Clock, ExternalLink, BarChart3 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Copy, Check, Clock, ExternalLink } from 'lucide-react';
 import { Token } from '../data/mockData';
 import { formatNumber, cn, getIpfsUrl, IPFS_GATEWAYS } from '../lib/utils';
 import { formatDistanceToNow } from 'date-fns';

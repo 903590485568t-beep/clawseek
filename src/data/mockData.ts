@@ -10,6 +10,7 @@ export interface Token {
   description: string;
   created: number; // timestamp
   vSolInBondingCurve?: number; // Optional property for bonding curve
+  bondingCurve?: number; // % completed
 }
 
 export interface TrendGroup {
